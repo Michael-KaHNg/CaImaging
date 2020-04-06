@@ -4,7 +4,7 @@ from operantanalysis import *
 from tkinter import filedialog, Tk
 
 
-def choose_file():
+def choose_file():  # find imaging file
     project = Tk()
     project.filename = filedialog.askopenfilename(initialdir="/", title="Choose an IDPS CSV file",
                                                   filetypes=[("CSV", "*.csv")])
@@ -19,7 +19,7 @@ def parse_csv():
     return csv_file
 
 
-def load_operant_file():
+def load_operant_file():  # find operant behaviour file
     project = Tk()
     project.filename = filedialog.askopenfilename(initialdir="/", title="Choose a Behavioral Operant File",
                                                   filetypes=[("all files", "*.")])
@@ -34,12 +34,12 @@ def align_lists():
     behavior_file = array(load_operant_file())
     event_detection_file = parse_csv()
     time_codes = list(map(float, behavior_file[0]))
-    behaviors = list(behavior_file[1])
-    df = pd.read_csv(event_detection_file, low_memory=False)
-    df2 = pd.DataFrame(list(zip(time_codes, behaviors)), columns=['Time Codes', 'Behavior'])
+    behaviors = list(behavior_file[1])  # these are all parsing meaningful data from output files
+    df = pd.read_csv(event_detection_file, low_memory=False)  # override default low_memory = true. df is events
+    df2 = pd.DataFrame(list(zip(time_codes, behaviors)), columns=['Time Codes', 'Behavior'])  # time+behaviour codes
     with pd.option_context('display.max_rows', 795, 'display.max_columns', 2):
         print(df2)
-
+    # add headers/columns for different trials
     df.columns = df.columns.astype(str)
     df.insert(df.shape[1], 'Raw Behavioral Codes', NaN)
     df.insert(df.shape[1], 'Reward Presentation', NaN)
@@ -61,15 +61,15 @@ def align_lists():
     for index, value in enumerate(cell_times):
         for index_2, value_2 in enumerate(time_codes):
             if round(value_2, 1) == value:
-                df.iloc[index + 1, [-11]] = behaviors[index_2]
+                df.iloc[index + 1, [-11]] = behaviors[index_2]  # behaviours index_2
 
     for index, value in enumerate(cell_times):
         for index_2, value_2 in enumerate(time_codes):
-            if round(value_2, 1) == value:
+            if round(value_2, 1) == value:  # associate the cell-time w corresponding time-code
                 x = 1
                 if behaviors[index_2] == 'EndSession':
-                    break
-                if round(time_codes[index_2], 1) == round(time_codes[index_2 + x], 1):
+                    break  # end at end of behavioural session
+                if round(time_codes[index_2], 1) == round(time_codes[index_2 + x], 1):  # time bins
                     n = []
                     n.append(behaviors[index_2])
                     while True:
@@ -79,7 +79,7 @@ def align_lists():
                         x += 1
                         if behaviors[index_2] == 'HouseLightOff':
                             break
-                        if round(time_codes[index_2], 1) != round(time_codes[index_2 + x], 1):
+                        if round(time_codes[index_2], 1) != round(time_codes[index_2 + x], 1):  # break at time bin end
                             break
                     if behaviors[index_2] == 'EndSession':
                         break
@@ -127,7 +127,7 @@ def align_lists():
                                 pass
                             if behaviors[index_2 + x] == 'PokeOn1':
                                 break
-
+# the following construct a binary matrix of whether or not an event occurs, each column represents different event type
     for index, value in enumerate(cell_times):
         for index_2, value_2 in enumerate(time_codes):
             if round(value_2, 1) == value:
@@ -216,7 +216,7 @@ def align_lists():
                         if behaviors[index_2 + x] == 'DipOff':
                             break
 
-    df.fillna(0, inplace=True)
+    df.fillna(0, inplace=True)  # for any places not filled by 1 (ie which still have nan), replace nan w 0 (false)
 
     with pd.option_context('display.max_rows', 200, 'display.max_columns', 50):
         print(df)
